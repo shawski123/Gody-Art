@@ -1,3 +1,3 @@
 "# Gody-Art" 
 
-Just an editor that allows changing color and thickness and has an undo feature. Nothing else. Nothing more.
+Just an pixel editor that allows for changing color and thickness and has an undo feature. Nothing else. Nothing more.
