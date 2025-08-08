@@ -1,0 +1,21 @@
+# ninja log v6
+7	90	7762905880869083	sfml-populate-prefix/src/sfml-populate-stamp/sfml-populate-mkdir	e2b247b6b98b58ac
+7	90	7762905880869083	D:/Source/Repos/cmake-fetchcontent-tutorial-code/out/build/x64-Debug/_deps/sfml-subbuild/sfml-populate-prefix/src/sfml-populate-stamp/sfml-populate-mkdir	e2b247b6b98b58ac
+91	4905	7762905929017571	sfml-populate-prefix/src/sfml-populate-stamp/sfml-populate-download	8ce2f4ddb7b6fa75
+5044	5112	7762905931105724	sfml-populate-prefix/src/sfml-populate-stamp/sfml-populate-configure	8d1509c32959e714
+91	4905	7762905929017571	D:/Source/Repos/cmake-fetchcontent-tutorial-code/out/build/x64-Debug/_deps/sfml-subbuild/sfml-populate-prefix/src/sfml-populate-stamp/sfml-populate-download	8ce2f4ddb7b6fa75
+4907	4977	7762905929745718	sfml-populate-prefix/src/sfml-populate-stamp/sfml-populate-update	2e66be6067792c6
+4977	5044	7762905930417483	sfml-populate-prefix/src/sfml-populate-stamp/sfml-populate-patch	31700555fef69fee
+5044	5112	7762905931105724	D:/Source/Repos/cmake-fetchcontent-tutorial-code/out/build/x64-Debug/_deps/sfml-subbuild/sfml-populate-prefix/src/sfml-populate-stamp/sfml-populate-configure	8d1509c32959e714
+4977	5044	7762905930417483	D:/Source/Repos/cmake-fetchcontent-tutorial-code/out/build/x64-Debug/_deps/sfml-subbuild/sfml-populate-prefix/src/sfml-populate-stamp/sfml-populate-patch	31700555fef69fee
+4907	4977	7762905929745718	D:/Source/Repos/cmake-fetchcontent-tutorial-code/out/build/x64-Debug/_deps/sfml-subbuild/sfml-populate-prefix/src/sfml-populate-stamp/sfml-populate-update	2e66be6067792c6
+5112	5176	7762905931748513	sfml-populate-prefix/src/sfml-populate-stamp/sfml-populate-build	45b30c06a0f069b9
+5112	5176	7762905931748513	D:/Source/Repos/cmake-fetchcontent-tutorial-code/out/build/x64-Debug/_deps/sfml-subbuild/sfml-populate-prefix/src/sfml-populate-stamp/sfml-populate-build	45b30c06a0f069b9
+5177	5242	7762905932401643	sfml-populate-prefix/src/sfml-populate-stamp/sfml-populate-install	bb6186f932aec2f1
+5177	5242	7762905932401643	D:/Source/Repos/cmake-fetchcontent-tutorial-code/out/build/x64-Debug/_deps/sfml-subbuild/sfml-populate-prefix/src/sfml-populate-stamp/sfml-populate-install	bb6186f932aec2f1
+5242	5313	7762905933101440	sfml-populate-prefix/src/sfml-populate-stamp/sfml-populate-test	5b2fd98e5ef9a509
+5313	5407	7762905934041251	D:/Source/Repos/cmake-fetchcontent-tutorial-code/out/build/x64-Debug/_deps/sfml-subbuild/CMakeFiles/sfml-populate-complete	fdc0a7076278c829
+5242	5313	7762905933101440	D:/Source/Repos/cmake-fetchcontent-tutorial-code/out/build/x64-Debug/_deps/sfml-subbuild/sfml-populate-prefix/src/sfml-populate-stamp/sfml-populate-test	5b2fd98e5ef9a509
+5313	5407	7762905934041251	CMakeFiles/sfml-populate-complete	fdc0a7076278c829
+5313	5407	7762905934041251	sfml-populate-prefix/src/sfml-populate-stamp/sfml-populate-done	fdc0a7076278c829
+5313	5407	7762905934041251	D:/Source/Repos/cmake-fetchcontent-tutorial-code/out/build/x64-Debug/_deps/sfml-subbuild/sfml-populate-prefix/src/sfml-populate-stamp/sfml-populate-done	fdc0a7076278c829

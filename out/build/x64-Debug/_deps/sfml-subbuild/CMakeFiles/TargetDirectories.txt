@@ -1,0 +1,3 @@
+D:/Source/Repos/cmake-fetchcontent-tutorial-code/out/build/x64-Debug/_deps/sfml-subbuild/CMakeFiles/sfml-populate.dir
+D:/Source/Repos/cmake-fetchcontent-tutorial-code/out/build/x64-Debug/_deps/sfml-subbuild/CMakeFiles/edit_cache.dir
+D:/Source/Repos/cmake-fetchcontent-tutorial-code/out/build/x64-Debug/_deps/sfml-subbuild/CMakeFiles/rebuild_cache.dir
