@@ -10,4 +10,7 @@ if(WIN32)
           $<TARGET_FILE:sfml-window>
           $<TARGET_FILE:sfml-system>
           $<TARGET_FILE_DIR:Gody_Art>)
+     set_target_properties(Gody_Art PROPERTIES
+    LINK_FLAGS "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup"
+     )
 endif()

@@ -9,6 +9,12 @@
 #include <windows.h>
 #include <commdlg.h>
 
+#ifdef _MSC_VER
+#pragma comment(linker, "/SUBSYSTEM:windows")
+#pragma comment(linker, "/ENTRY:mainCRTStartup")
+#endif
+
+
 enum {
 	width,
 	height
