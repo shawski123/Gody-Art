@@ -104,7 +104,7 @@ int main() {
 				projectSize[width] = 256;
 				projectSize[height] = 256;
 			}
-			SeparatorText("Project name");
+			SeparatorText("Project Name");
 			if (ImGui::InputText("", fileName, 256)) {
 			}
 			if (ImGui::Button("Create")) {
