@@ -15,6 +15,7 @@ enum {
 };
 
 void SeparatorText(const char* label);
+void saveFile(int projectSize[], std::vector<sf::RectangleShape> strokes, char fileName[]);
 
 int main() {
 	bool isctrlopressed = true;
@@ -40,7 +41,7 @@ int main() {
 	sf::Texture texture;
 
 	sf::RenderWindow window(sf::VideoMode(windowSize[width], windowSize[height]), "Gody Art");
-	window.setFramerateLimit(144);
+	window.setFramerateLimit(1000);
 	ImGui::SFML::Init(window);
 	bool my_tool_active = true;
 	float my_color[4] = { .5f,.5f,.5f,.5f };
@@ -70,7 +71,7 @@ int main() {
 
 					if (zoomFactor > 0) {
 						sf::View view = window.getView();
-						view.setCenter(800, 360);
+						view.setCenter(640, 360);
 						view.zoom(1.f / zoomFactor);
 						window.setView(view);
 					}
@@ -90,7 +91,7 @@ int main() {
 			ImGui::Begin("Project Configuration");
 			SeparatorText("Project Size");
 			ImGui::InputInt2("", projectSize);
-			SeparatorText("Size Presets");
+			SeparatorText("Size Presets (Recommended)");
 			if (ImGui::Button("64x64")) {
 				projectSize[width] = 64;
 				projectSize[height] = 64;
@@ -126,14 +127,14 @@ int main() {
 				//Set project size
 				bg.setSize(sf::Vector2f(projectSize[width], projectSize[height]));
 				bg.setOrigin(bg.getLocalBounds().width / 2, bg.getLocalBounds().height / 2);
-				bg.setPosition({ 800, 360 });
+				bg.setPosition({ 640, 360 });
 				showWin = false;
 			}
 			ImGui::End();
 		}
 
 		ImGui::SetNextWindowSize(
-			ImVec2(float(windowSize[width] / 4), float(windowSize[height])), ImGuiCond_Always
+			ImVec2(float(windowSize[width] / 4), float(windowSize[height])/5), ImGuiCond_Always
 		);
 		ImGui::SetNextWindowPos(ImVec2(0, 0));
 		if (!showWin) {
@@ -154,21 +155,7 @@ int main() {
 						texture.loadFromFile(openFile);
 					}
 					if (ImGui::MenuItem("Save", "Ctrl+S")) {
-						sf::RenderTexture renderTexture;
-						renderTexture.create(windowSize[width], windowSize[height]);
-						renderTexture.clear(sf::Color::White);
-
-						for (auto& pixel : strokes) {
-							renderTexture.draw(pixel);
-						}
-						renderTexture.display();
-
-						sf::Image image = renderTexture.getTexture().copyToImage();
-						char fullFileName[260];
-						strcpy(fullFileName, fileName);
-						strcat(fullFileName, ".png");
-						image.saveToFile(fullFileName);
-						ImGui::SFML::Shutdown(); return 0;
+						saveFile(projectSize, strokes, fileName);
 					}
 					if (ImGui::MenuItem("Close", "Ctrl+W")) { ImGui::SFML::Shutdown(); return 0; }
 					ImGui::EndMenu();
@@ -204,7 +191,7 @@ int main() {
 		sf::Sprite sprite(texture);
 		sf::Vector2f spriteSize = { sprite.getLocalBounds().width, sprite.getLocalBounds().height };
 		sprite.setOrigin({ spriteSize.x / 2, spriteSize.y / 2 });
-		sprite.setPosition(800, 360);
+		sprite.setPosition(640, 360);
 
 		float scaleFactor = 1.0f;
 		if (spriteSize.x > projectSize[width] || spriteSize.y > projectSize[height]) {
@@ -286,21 +273,7 @@ int main() {
 		}
 		//Save to file CTRL+S
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl) && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S)) {
-			sf::RenderTexture renderTexture;
-			renderTexture.create(projectSize[width], projectSize[height]);
-			renderTexture.clear(sf::Color::White);
-
-			for (auto& pixel : strokes) {
-				renderTexture.draw(pixel);
-			}
-			renderTexture.display();
-
-			sf::Image image = renderTexture.getTexture().copyToImage();
-			char fullFileName[260];
-			strcpy(fullFileName, fileName);
-			strcat(fullFileName, ".png");
-			image.saveToFile(fullFileName);
-			ImGui::SFML::Shutdown(); return 0;
+			saveFile(projectSize, strokes, fileName);
 		}
 		//Open file CTRL+O
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl) && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::O)) {
@@ -341,4 +314,31 @@ void SeparatorText(const char* label)
 	ImGui::Separator();
 	ImGui::Text("%s", label);
 	ImGui::Separator();
+}
+
+void saveFile(int projectSize[], std::vector<sf::RectangleShape> strokes, char fileName[]) {
+	sf::RenderTexture renderTexture;
+	renderTexture.create(projectSize[width], projectSize[height]);
+
+	sf::View view(sf::FloatRect(
+		640 - projectSize[width] / 2.f,
+		360 - projectSize[height] / 2.f,
+		projectSize[width],
+		projectSize[height]
+	));
+	renderTexture.setView(view);
+
+	renderTexture.clear(sf::Color::White);
+
+	for (auto& pixel : strokes) {
+		renderTexture.draw(pixel);
+	}
+	renderTexture.display();
+
+	sf::Image image = renderTexture.getTexture().copyToImage();
+	char path[260];
+	strcpy(path, "save/");
+	strcat(path, fileName);
+	strcat(path, ".png");
+	image.saveToFile(path);
 }
