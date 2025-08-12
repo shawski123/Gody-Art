@@ -26,11 +26,14 @@ void saveFile(int projectSize[], std::vector<sf::RectangleShape> strokes, char f
 int main() {
 	bool isctrlopressed = true;
 	bool spriteOn = true;
+	char* hideOrshow = "Hide Image";
 	int windowSize[2] = { 600,600 }; // 600,600 by default
 	int projectSize[2] = { 0,0 };
 	char fileName[256] = "";
 	bool showWin = true;
 	float zoomSpeed = 0.1f;
+	int count = 0;
+	bool hasImage = false;
 
 	OPENFILENAME ofn;
 	char openFile[MAX_PATH] = "";
@@ -153,12 +156,12 @@ int main() {
 						spriteOn = true;
 						if (GetOpenFileName(&ofn)) {
 							std::cout << "Selected file: " << openFile << std::endl;
+							hasImage = true;
+							texture.loadFromFile(openFile);
 						}
 						else {
 							std::cout << "No file selected or dialog canceled." << std::endl;
 						}
-
-						texture.loadFromFile(openFile);
 					}
 					if (ImGui::MenuItem("Save", "Ctrl+S")) {
 						saveFile(projectSize, strokes, fileName);
@@ -174,8 +177,19 @@ int main() {
 				clear = true;
 			}
 
-			if (ImGui::Button("Delete Image")) {
-				spriteOn = false;
+			if (hasImage) {
+				if (ImGui::Button(hideOrshow)) {
+					if (count == 0) {
+						hideOrshow = "Show Image";
+						count = 1;
+						spriteOn = false;
+					}
+					else {
+						hideOrshow = "Hide Image";
+						count = 0;
+						spriteOn = true;
+					}
+				}
 			}
 
 			if (ImGui::InputFloat("px", &single_pix_size)) {
@@ -250,7 +264,10 @@ int main() {
 		if (clear == true) {
 			strokes.clear();
 			undo.clear();
+			hasImage = false;
 			spriteOn = false;
+			hideOrshow = "Hide image";
+			count = 0;
 			clear = false;
 		}
 
@@ -286,12 +303,12 @@ int main() {
 			spriteOn = true;
 			if (GetOpenFileName(&ofn)) {
 				std::cout << "Selected file: " << openFile << std::endl;
+				hasImage = true;
+				texture.loadFromFile(openFile);
 			}
 			else {
 				std::cout << "No file selected or dialog canceled." << std::endl;
 			}
-
-			texture.loadFromFile(openFile);
 			isctrlopressed = true;
 		}
 		if (!sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl) || !sf::Keyboard::isKeyPressed(sf::Keyboard::Key::O)) {
