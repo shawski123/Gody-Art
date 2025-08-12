@@ -34,9 +34,9 @@ int main() {
 	float zoomSpeed = 0.1f;
 	int count = 0;
 	bool hasImage = false;
+	float zoomFactor = 0;
 
-	float moveX = 640;
-	float moveY = 360;
+	sf::Vector2f canvasMovement = { 640,360 };
 
 	OPENFILENAME ofn;
 	char openFile[MAX_PATH] = "";
@@ -79,11 +79,11 @@ int main() {
 			if (event.type == sf::Event::MouseWheelScrolled) {
 				if (event.mouseWheelScroll.wheel == sf::Mouse::VerticalWheel) {
 					float delta = event.mouseWheelScroll.delta;
-					float zoomFactor = 1.f + delta * zoomSpeed;
+					zoomFactor = 1.f + delta * zoomSpeed;
 
 					if (zoomFactor > 0) {
 						sf::View view = window.getView();
-						view.setCenter(640, 360);
+						view.setCenter(canvasMovement);
 						view.zoom(1.f / zoomFactor);
 						window.setView(view);
 					}
@@ -142,11 +142,17 @@ int main() {
 				bg.setPosition({ 640, 360 });
 				showWin = false;
 			}
+			SeparatorText("Controls");
+			ImGui::Text("LControl + O = Open");
+			ImGui::Text("LControl + S = Save");
+			ImGui::Text("LControl + W = Quit");
+			ImGui::Text("WASD = Move in canvas");
+			ImGui::Text("LShift = Precision Mode (Slows zoom speed and movement speed in canvas)");
 			ImGui::End();
 		}
 
 		ImGui::SetNextWindowSize(
-			ImVec2(float(windowSize[width] / 4), float(windowSize[height])/5), ImGuiCond_Always
+			ImVec2(float(windowSize[width] / 4), float(windowSize[height])/6), ImGuiCond_Always
 		);
 		ImGui::SetNextWindowPos(ImVec2(0, 0));
 		if (!showWin) {
@@ -155,7 +161,7 @@ int main() {
 			{
 				if (ImGui::BeginMenu("Project Settings"))
 				{
-					if (ImGui::MenuItem("Open..", "Ctrl+O")) {
+					if (ImGui::MenuItem("Open", "Ctrl+O")) {
 						spriteOn = true;
 						if (GetOpenFileName(&ofn)) {
 							std::cout << "Selected file: " << openFile << std::endl;
@@ -197,6 +203,10 @@ int main() {
 
 			if (ImGui::InputFloat("px", &single_pix_size)) {
 				pix_size = { single_pix_size, single_pix_size };
+			}
+
+			if (ImGui::Button("Controls")) {
+
 			}
 
 			ImGui::End();
@@ -302,7 +312,7 @@ int main() {
 			saveFile(projectSize, strokes, fileName);
 		}
 		//Open file CTRL+O
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl) && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::O)) {
+		if (!isctrlopressed && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl) && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::O)) {
 			spriteOn = true;
 			if (GetOpenFileName(&ofn)) {
 				std::cout << "Selected file: " << openFile << std::endl;
@@ -319,8 +329,33 @@ int main() {
 		}
 
 		//Move around in the canvas
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LShift)) {
+			zoomSpeed = 0.05f;
+		}
+		if (!sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LShift)) {
+			zoomSpeed = 0.1f;
+		}
+
+		sf::View view = window.getView();
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W) && !sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl)) {
-			sf::View view = window.getView();
+			canvasMovement += {0, -1 * zoomSpeed};
+			view.setCenter(canvasMovement);
+			window.setView(view);
+		}
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S) && !sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl)) {
+			canvasMovement += {0, 1 * zoomSpeed};
+			view.setCenter(canvasMovement);
+			window.setView(view);
+		}
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A)) {
+			canvasMovement += {-1 * zoomSpeed, 0};
+			view.setCenter(canvasMovement);
+			window.setView(view);
+		}
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D)) {
+			canvasMovement += {1 * zoomSpeed, 0};
+			view.setCenter(canvasMovement);
+			window.setView(view);
 		}
 
 		window.clear();
