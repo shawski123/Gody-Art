@@ -35,6 +35,9 @@ int main() {
 	int count = 0;
 	bool hasImage = false;
 
+	float moveX = 640;
+	float moveY = 360;
+
 	OPENFILENAME ofn;
 	char openFile[MAX_PATH] = "";
 
@@ -313,6 +316,11 @@ int main() {
 		}
 		if (!sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl) || !sf::Keyboard::isKeyPressed(sf::Keyboard::Key::O)) {
 			isctrlopressed = false;
+		}
+
+		//Move around in the canvas
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W) && !sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl)) {
+			sf::View view = window.getView();
 		}
 
 		window.clear();
