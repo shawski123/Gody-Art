@@ -39,7 +39,7 @@ int main() {
 	ZeroMemory(&ofn, sizeof(ofn));
 	ofn.lStructSize = sizeof(ofn);
 	ofn.hwndOwner = NULL; // No specific owner window
-	ofn.lpstrFilter = "PNG Images\0*.png\0";
+	ofn.lpstrFilter = "PNG Images\0*.png\0JPEG Images\0*.jpg";
 	ofn.lpstrFile = openFile;
 	ofn.nMaxFile = MAX_PATH;
 	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
