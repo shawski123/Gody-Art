@@ -38,6 +38,7 @@ int main() {
 	bool showControls = false;
 	char* hideOrshowCtrls = "Show Controls";
 	bool countCtrl = false;
+	bool showCloseWin = false;
 
 	sf::Vector2f canvasMovement = { 640,360 };
 
@@ -172,7 +173,7 @@ int main() {
 					if (ImGui::MenuItem("Save", "Ctrl+S")) {
 						saveFile(projectSize, strokes, fileName);
 					}
-					if (ImGui::MenuItem("Close", "Ctrl+W")) { ImGui::SFML::Shutdown(); return 0; }
+					if (ImGui::MenuItem("Close", "Ctrl+W")) { showCloseWin = true; }
 					ImGui::EndMenu();
 				}
 				ImGui::EndMenuBar();
@@ -203,7 +204,7 @@ int main() {
 			}
 
 			if (ImGui::Button(hideOrshowCtrls)) {
-				if (countCtrl == 0) {
+				if (countCtrl == false) {
 					showControls = true;
 					hideOrshowCtrls = "Hide Controls";
 					countCtrl = true;
@@ -324,7 +325,22 @@ int main() {
 		}
 		//Close CTRL+W
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl) && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W)) {
-			ImGui::SFML::Shutdown(); return 0;
+			showCloseWin = true;
+		}
+
+		ImGui::SetNextWindowPos(ImVec2(640, 360), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+		ImGui::SetNextWindowSize(ImVec2(250, 100), ImGuiCond_Always);
+		if (showCloseWin) {
+			ImGui::Begin("Exit Dialog");
+			ImGui::Text("Are you sure you want to exit?");
+			if (ImGui::Button("Yes")) {
+				ImGui::SFML::Shutdown(); return 0;
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("No")) {
+				showCloseWin = false;
+			}
+			ImGui::End();
 		}
 		//Save to file CTRL+S
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl) && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S)) {
@@ -402,6 +418,8 @@ void SeparatorText(const char* label)
 }
 
 void saveFile(int projectSize[], std::vector<sf::RectangleShape> strokes, char fileName[]) {
+	CreateDirectoryA("save", NULL); // Creates if missing, does nothing if exists
+
 	sf::RenderTexture renderTexture;
 	renderTexture.create(projectSize[width], projectSize[height]);
 
@@ -426,5 +444,8 @@ void saveFile(int projectSize[], std::vector<sf::RectangleShape> strokes, char f
 	strcpy(path, "save/");
 	strcat(path, fileName);
 	strcat(path, ".png");
-	image.saveToFile(path);
+
+	if (!image.saveToFile(path)) {
+		MessageBoxA(NULL, "Failed to save the image!", "Error", MB_ICONERROR);
+	}
 }
