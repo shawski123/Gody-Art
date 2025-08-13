@@ -32,9 +32,12 @@ int main() {
 	char fileName[256] = "";
 	bool showWin = true;
 	float zoomSpeed = 0.1f;
-	int count = 0;
+	bool countHideOrShow = false;
 	bool hasImage = false;
 	float zoomFactor = 0;
+	bool showControls = false;
+	char* hideOrshowCtrls = "Show Controls";
+	bool countCtrl = false;
 
 	sf::Vector2f canvasMovement = { 640,360 };
 
@@ -142,17 +145,11 @@ int main() {
 				bg.setPosition({ 640, 360 });
 				showWin = false;
 			}
-			SeparatorText("Controls");
-			ImGui::Text("LControl + O = Open");
-			ImGui::Text("LControl + S = Save");
-			ImGui::Text("LControl + W = Quit");
-			ImGui::Text("WASD = Move in canvas");
-			ImGui::Text("LShift = Precision Mode (Slows zoom speed and movement speed in canvas)");
 			ImGui::End();
 		}
 
 		ImGui::SetNextWindowSize(
-			ImVec2(float(windowSize[width] / 4), float(windowSize[height])/6), ImGuiCond_Always
+			ImVec2(320, 170), ImGuiCond_Always
 		);
 		ImGui::SetNextWindowPos(ImVec2(0, 0));
 		if (!showWin) {
@@ -188,14 +185,14 @@ int main() {
 
 			if (hasImage) {
 				if (ImGui::Button(hideOrshow)) {
-					if (count == 0) {
+					if (countHideOrShow == false) {
 						hideOrshow = "Show Image";
-						count = 1;
+						countHideOrShow = true;
 						spriteOn = false;
 					}
 					else {
 						hideOrshow = "Hide Image";
-						count = 0;
+						countHideOrShow = false;
 						spriteOn = true;
 					}
 				}
@@ -205,9 +202,31 @@ int main() {
 				pix_size = { single_pix_size, single_pix_size };
 			}
 
-			if (ImGui::Button("Controls")) {
-
+			if (ImGui::Button(hideOrshowCtrls)) {
+				if (countCtrl == 0) {
+					showControls = true;
+					hideOrshowCtrls = "Hide Controls";
+					countCtrl = true;
+				}
+				else {
+					showControls = false;
+					hideOrshowCtrls = "Show Controls";
+					countCtrl = false;
+				}
 			}
+
+			ImGui::End();
+		}
+
+		if (showControls) {
+			ImGui::SetNextWindowSize(ImVec2(550, 170), ImGuiCond_Appearing);
+			ImGui::SetNextWindowPos(ImVec2(320, 0), ImGuiCond_Appearing);
+			ImGui::Begin("Controls");
+			ImGui::Text("LControl + O = Open");
+			ImGui::Text("LControl + S = Save");
+			ImGui::Text("LControl + W = Quit");
+			ImGui::Text("WASD = Move in canvas");
+			ImGui::Text("LShift = Precision Mode (Slows zoom speed and movement speed in canvas)");
 
 			ImGui::End();
 		}
@@ -280,7 +299,7 @@ int main() {
 			hasImage = false;
 			spriteOn = false;
 			hideOrshow = "Hide image";
-			count = 0;
+			countHideOrShow = false;
 			clear = false;
 		}
 
@@ -399,6 +418,7 @@ void saveFile(int projectSize[], std::vector<sf::RectangleShape> strokes, char f
 	for (auto& pixel : strokes) {
 		renderTexture.draw(pixel);
 	}
+
 	renderTexture.display();
 
 	sf::Image image = renderTexture.getTexture().copyToImage();
