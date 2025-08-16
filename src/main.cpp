@@ -73,6 +73,7 @@ int main() {
 	float single_pix_size = 20;
 	std::vector<std::vector<sf::RectangleShape>> undo;
 	std::vector<sf::RectangleShape> temp;
+	std::vector<std::vector<sf::RectangleShape>> undoUndo;
 	std::vector<sf::RectangleShape> strokes;
 
 	std::vector<sf::Vector2f> posHistory(2);
@@ -339,6 +340,7 @@ int main() {
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl) && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Z) && !isctrlzpressed) {
 			if (!temp.empty()) {
 				undo.push_back(temp);
+				
 				temp.clear();
 			}
 
