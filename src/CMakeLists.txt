@@ -1,4 +1,4 @@
-add_executable(Gody_Art main.cpp)
+add_executable(Gody_Art main.cpp "Editor.h" "Editor.cpp" "Drawing.h" "Drawing.cpp" "Util.h" "Util.cpp")
 target_link_libraries(Gody_Art PRIVATE ImGui-SFML::ImGui-SFML)
 
 # Copy DLLs needed for runtime on Windows
@@ -10,7 +10,4 @@ if(WIN32)
           $<TARGET_FILE:sfml-window>
           $<TARGET_FILE:sfml-system>
           $<TARGET_FILE_DIR:Gody_Art>)
-     set_target_properties(Gody_Art PROPERTIES
-    LINK_FLAGS "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup"
-     )
 endif()
