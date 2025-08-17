@@ -7,7 +7,7 @@ void SeparatorText(const char* label) {
 }
 
 void saveFile(int projectSize[], std::vector<sf::RectangleShape>& strokes, char fileName[]) {
-	CreateDirectoryA("save", NULL);
+	CreateDirectoryA("save", NULL); 
 
 	sf::RenderTexture renderTexture;
 	renderTexture.create(projectSize[width], projectSize[height]);
