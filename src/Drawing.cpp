@@ -37,3 +37,39 @@ void draw(const sf::Vector2f& startPoint, const sf::Vector2f& endPoint, std::vec
 		}
 	}
 }
+
+void undo(std::vector<sf::RectangleShape>& temp, std::vector<std::vector<sf::RectangleShape>>& undoVec
+	, std::vector<sf::RectangleShape>& strokes, std::vector<std::vector<sf::RectangleShape>>& redoVec, std::vector<std::vector<sf::RectangleShape>>& clearVec) {
+	if (!temp.empty()) {
+		undoVec.push_back(temp);
+		temp.clear();
+
+		redoVec.clear();
+	}
+
+	if (!undoVec.empty()) {
+		const std::vector<sf::RectangleShape>& lastStroke = undoVec.back();
+		if (strokes.size() >= lastStroke.size()) {
+			strokes.resize(strokes.size() - lastStroke.size());
+			redoVec.push_back(lastStroke);
+			undoVec.pop_back();
+		}
+	}
+
+	/*if (!clearVec.empty()) {
+		strokes = clearVec.back();
+		undoVec.push_back(strokes);
+		clearVec.pop_back();
+	}*/
+}
+
+void redo(std::vector<std::vector<sf::RectangleShape>>& redoVec, std::vector<sf::RectangleShape>& strokes,
+	std::vector<std::vector<sf::RectangleShape>>& undoVec) {
+	if (!redoVec.empty()) {
+		const std::vector<sf::RectangleShape>& lastStroke = redoVec.back();
+		strokes.insert(strokes.end(), lastStroke.begin(), lastStroke.end());
+		undoVec.push_back(lastStroke);
+		redoVec.pop_back();
+	}
+}
+

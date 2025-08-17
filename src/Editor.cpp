@@ -4,7 +4,8 @@ Editor::Editor()
 	: window(sf::VideoMode(windowSize[width], windowSize[height]), "Gody Art") {
 	window.setFramerateLimit(144);
 	ImGui::SFML::Init(window);
-	undo.reserve(10000);
+	undoVec.reserve(10000);
+	redoVec.reserve(10000);
 	strokes.reserve(10000);
 	bg.setFillColor(sf::Color::White);
 	ZeroMemory(&ofn, sizeof(ofn));
@@ -223,7 +224,7 @@ void Editor::update(float deltaTime) {
 		}
 	}
 	else if (!temp.empty()) {
-		undo.push_back(temp);
+		undoVec.push_back(temp);
 		temp.clear();
 	}
 	else {
@@ -248,8 +249,10 @@ void Editor::update(float deltaTime) {
 
 	//Clears screen
 	if (clear == true) {
+		redoVec.clear();
+		//clearVec.push_back(strokes);
+		undoVec.clear();
 		strokes.clear();
-		undo.clear();
 		hasImage = false;
 		spriteOn = false;
 		hideOrshow = "Hide image";
@@ -258,25 +261,26 @@ void Editor::update(float deltaTime) {
 	}
 
 	//Undo CTRL+Z
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl) && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Z) && !isctrlzpressed) {
-		if (!temp.empty()) {
-			undo.push_back(temp);
-
-			temp.clear();
-		}
-
-		if (!undo.empty()) {
-			std::vector<sf::RectangleShape>& lastStroke = undo.back();
-			if (strokes.size() >= lastStroke.size()) {
-				strokes.resize(strokes.size() - lastStroke.size());
-				undo.pop_back();
-			}
-		}
-		isctrlzpressed = true;
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl) && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Z) 
+		&& !sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LShift) && !isCtrlZPressed) {
+		undo(temp, undoVec, strokes, redoVec, clearVec);
+		isCtrlZPressed = true;
 	}
 	if (!sf::Keyboard::isKeyPressed(sf::Keyboard::LControl) || !sf::Keyboard::isKeyPressed(sf::Keyboard::Z)) {
-		isctrlzpressed = false;
+		isCtrlZPressed = false;
 	}
+
+	//Redo CTRL+Shift+Z
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl) && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LShift) &&
+		sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Z) && !isCtrlSZPressed) {
+		redo(redoVec, strokes, undoVec);
+		isCtrlSZPressed = true;
+	}
+	if (!sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl) || !sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LShift) ||
+		!sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Z)) {
+		isCtrlSZPressed = false;
+	}
+
 	//Close CTRL+W
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl) && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W) && showWin) {
 		if (MessageBoxA(NULL, "Are you sure?", "Exit", MB_YESNO | MB_ICONEXCLAMATION) == 6) {
@@ -289,7 +293,7 @@ void Editor::update(float deltaTime) {
 		saveFile(projectSize, strokes, fileName);
 	}
 	//Open file CTRL+O
-	if (!isctrlopressed && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl) && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::O) && showWin) {
+	if (!isCtrlOPressed && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl) && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::O) && showWin) {
 		spriteOn = true;
 		if (GetOpenFileName(&ofn)) {
 			loadImage(openFile);
@@ -297,10 +301,10 @@ void Editor::update(float deltaTime) {
 		else {
 			std::cout << "No file selected or dialog canceled." << std::endl;
 		}
-		isctrlopressed = true;
+		isCtrlOPressed = true;
 	}
 	if (!sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl) || !sf::Keyboard::isKeyPressed(sf::Keyboard::Key::O)) {
-		isctrlopressed = false;
+		isCtrlOPressed = false;
 	}
 
 	//Move around in the canvas

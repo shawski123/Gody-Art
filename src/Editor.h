@@ -25,8 +25,9 @@ private:
 	void loadImage(const char* fileName);
 	
 	//State variables
-	bool isctrlopressed = true;
-	bool isctrlzpressed = false;
+	bool isCtrlZPressed = false;
+	bool isCtrlSZPressed = false;
+	bool isCtrlOPressed = false;
 	bool spriteOn = true;
 	char* hideOrshow = "Hide Image";
 	int windowSize[2] = { 600,600 }; // 600,600 by default
@@ -61,11 +62,11 @@ private:
 	sf::Vector2f pixSize = { 10,10 };
 	float singlePixSize = 20;
 	float myColor[3] = { 0.f,0.f,0.f };
-	std::vector<std::vector<sf::RectangleShape>> undo;
+	std::vector<std::vector<sf::RectangleShape>> undoVec;
 	std::vector<sf::RectangleShape> temp;
-	std::vector<std::vector<sf::RectangleShape>> undoUndo;
+	std::vector<std::vector<sf::RectangleShape>> redoVec;
 	std::vector<sf::RectangleShape> strokes;
-	std::vector<sf::Vector2f> posHistory;
+	std::vector<std::vector<sf::RectangleShape>> clearVec;
 	sf::RectangleShape bg;
 
 	sf::VideoMode desktop = sf::VideoMode::getDesktopMode();
