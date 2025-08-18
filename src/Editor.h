@@ -28,6 +28,7 @@ private:
 	bool isCtrlZPressed = false;
 	bool isCtrlSZPressed = false;
 	bool isCtrlOPressed = false;
+	bool isFPressed = false;
 	bool spriteOn = true;
 	char* hideOrshow = "Hide Image";
 	int windowSize[2] = { 600,600 }; // 600,600 by default

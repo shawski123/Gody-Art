@@ -129,7 +129,7 @@ void Editor::update(float deltaTime) {
 					}
 				}
 				if (ImGui::MenuItem("Save", "Ctrl+S")) {
-					saveFile(projectSize, strokes, fileName);
+					saveFile(projectSize, strokes, fileName, bg);
 				}
 				if (ImGui::MenuItem("Close", "Ctrl+W")) {
 					if (MessageBoxA(NULL, "Are you sure?", "Exit", MB_YESNO | MB_ICONEXCLAMATION) == 6) {
@@ -188,6 +188,8 @@ void Editor::update(float deltaTime) {
 		ImGui::Text("LControl + O = Open");
 		ImGui::Text("LControl + S = Save");
 		ImGui::Text("LControl + W = Quit");
+		ImGui::Text("LControl + Z = Undo");
+		ImGui::Text("LControl + Shift + Z = Redo");
 		ImGui::Text("WASD = Move in canvas");
 		ImGui::Text("LShift = Precision Mode (Slows movement speed in canvas)");
 
@@ -203,7 +205,7 @@ void Editor::update(float deltaTime) {
 	//Opened image
 
 	//Draw
-	if (!ImGui::GetIO().WantCaptureMouse && sf::Mouse::isButtonPressed(sf::Mouse::Left) && inFocus) {
+	if (!ImGui::GetIO().WantCaptureMouse && sf::Mouse::isButtonPressed(sf::Mouse::Left) && inFocus && !isFPressed) {
 		sf::Vector2i mousePixelPos = sf::Mouse::getPosition(window);
 		sf::Vector2f mouseWorldPos = window.mapPixelToCoords(mousePixelPos);
 
@@ -232,7 +234,7 @@ void Editor::update(float deltaTime) {
 	}
 
 	//Erase
-	/*if (!ImGui::GetIO().WantCaptureMouse && sf::Mouse::isButtonPressed(sf::Mouse::Right)) {
+	if (!ImGui::GetIO().WantCaptureMouse && sf::Mouse::isButtonPressed(sf::Mouse::Right)) {
 		sf::Vector2i mousePixelPos = sf::Mouse::getPosition(window);
 		sf::Vector2f mouseWorldPos = window.mapPixelToCoords(mousePixelPos);
 
@@ -240,12 +242,26 @@ void Editor::update(float deltaTime) {
 		mouseWorldPos.x = static_cast<int>(mouseWorldPos.x / pixSize.x) * pixSize.x + pixSize.x / 2.f;
 		mouseWorldPos.y = static_cast<int>(mouseWorldPos.y / pixSize.y) * pixSize.y + pixSize.y / 2.f;
 
-		for (auto& pixel : strokes) {
-			if (pixel.getPosition() == mouseWorldPos) {
-				pixel.setFillColor(sf::Color::Transparent);
+		for (auto it = strokes.begin(); it != strokes.end();) {
+			if (it->getPosition() == mouseWorldPos) {
+				it = strokes.erase(it);
+			}
+			else {
+				it++;
 			}
 		}
-	}*/
+	}
+
+	//Fill
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F)) {
+		isFPressed = true;
+	}
+	if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left) && isFPressed && 
+		bg.getGlobalBounds().contains(window.mapPixelToCoords(sf::Mouse::getPosition(window)))) {
+
+		fill(bg, color);
+		isFPressed = false;
+	}
 
 	//Clears screen
 	if (clear == true) {
@@ -255,6 +271,7 @@ void Editor::update(float deltaTime) {
 		strokes.clear();
 		hasImage = false;
 		spriteOn = false;
+		bg.setFillColor(sf::Color::White);
 		hideOrshow = "Hide image";
 		countHideOrShow = false;
 		clear = false;
@@ -290,7 +307,7 @@ void Editor::update(float deltaTime) {
 
 	//Save to file CTRL+S
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl) && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S) && showWin) {
-		saveFile(projectSize, strokes, fileName);
+		saveFile(projectSize, strokes, fileName, bg);
 	}
 	//Open file CTRL+O
 	if (!isCtrlOPressed && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl) && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::O) && showWin) {

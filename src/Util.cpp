@@ -6,7 +6,7 @@ void SeparatorText(const char* label) {
 	ImGui::Separator();
 }
 
-void saveFile(int projectSize[], std::vector<sf::RectangleShape>& strokes, const char* fileName) {
+void saveFile(int projectSize[], std::vector<sf::RectangleShape>& strokes, const char* fileName, const sf::RectangleShape& bg) {
 	// Get the folder containing the executable
 	char exePath[260];
 	GetModuleFileNameA(NULL, exePath, 260);
@@ -29,7 +29,7 @@ void saveFile(int projectSize[], std::vector<sf::RectangleShape>& strokes, const
 	));
 	renderTexture.setView(view);
 
-	renderTexture.clear(sf::Color::White);
+	renderTexture.clear(bg.getFillColor());
 
 	for (auto& pixel : strokes) {
 		renderTexture.draw(pixel);

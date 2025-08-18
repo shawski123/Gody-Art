@@ -9,3 +9,7 @@ void undo(std::vector<sf::RectangleShape>& temp, std::vector<std::vector<sf::Rec
 
 void redo(std::vector<std::vector<sf::RectangleShape>>& redoVec, std::vector<sf::RectangleShape>& strokes, 
 	std::vector<std::vector<sf::RectangleShape>>& undoVec);
+
+void fill(sf::RectangleShape& bg, sf::Color color);
+
+//void erase(sf::RenderWindow window, sf::Vector2f pixSize, std::vector<sf::RectangleShape> strokes);

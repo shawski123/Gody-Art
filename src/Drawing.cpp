@@ -73,3 +73,21 @@ void redo(std::vector<std::vector<sf::RectangleShape>>& redoVec, std::vector<sf:
 	}
 }
 
+void fill(sf::RectangleShape& bg, sf::Color color) {
+	bg.setFillColor(color);
+}
+
+/*void erase(sf::RenderWindow window, sf::Vector2f pixSize, std::vector<sf::RectangleShape> strokes) {
+	sf::Vector2i mousePixelPos = sf::Mouse::getPosition(window);
+	sf::Vector2f mouseWorldPos = window.mapPixelToCoords(mousePixelPos);
+
+	// Snap to grid in world coords
+	mouseWorldPos.x = static_cast<int>(mouseWorldPos.x / pixSize.x) * pixSize.x + pixSize.x / 2.f;
+	mouseWorldPos.y = static_cast<int>(mouseWorldPos.y / pixSize.y) * pixSize.y + pixSize.y / 2.f;
+
+	for (auto& pixel : strokes) {
+		if (pixel.getPosition() == mouseWorldPos) {
+			
+		}
+	}
+}*/
