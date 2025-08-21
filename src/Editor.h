@@ -23,6 +23,7 @@ private:
 	void update(float dt);
 	void render();
 	void loadImage(const char* fileName);
+	void clearScreen();
 	
 	//State variables
 	bool isCtrlZPressed = false;
@@ -56,19 +57,19 @@ private:
 	OPENFILENAME ofn;
 	char openFile[MAX_PATH] = "";
 
+	//Canvas
+	sf::Image canvasImage;
+	sf::Texture canvasTexture;
+	sf::Sprite canvasSprite;
+	
 	//Drawing
-	sf::Sprite sprite;
-	sf::Vector2f firstPos;
-	sf::Texture texture;
-	sf::Vector2f pixSize = { 10,10 };
-	float singlePixSize = 20;
+	std::vector<sf::Image> undoVec;
+	std::vector<sf::Image> redoVec;
+	sf::Sprite imageSprite;
+	sf::Vector2i firstPos;
+	sf::Texture imageTexture;
 	float myColor[3] = { 0.f,0.f,0.f };
-	std::vector<std::vector<sf::RectangleShape>> undoVec;
-	std::vector<sf::RectangleShape> temp;
-	std::vector<std::vector<sf::RectangleShape>> redoVec;
-	std::vector<sf::RectangleShape> strokes;
-	std::vector<std::vector<sf::RectangleShape>> clearVec;
-	sf::RectangleShape bg;
+	float imageTransparency = 255;
 
 	sf::VideoMode desktop = sf::VideoMode::getDesktopMode();
 

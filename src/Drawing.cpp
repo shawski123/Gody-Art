@@ -1,29 +1,27 @@
 #include "Drawing.h"
 
-void draw(const sf::Vector2f& startPoint, const sf::Vector2f& endPoint, std::vector<sf::RectangleShape>& pixels,
-	const sf::Vector2f& pix_size, const sf::Color& color, std::vector<sf::RectangleShape>& temp) {
+void draw(const sf::Vector2i& startPoint, const sf::Vector2i& endPoint, sf::Image& canvasImage,
+	const sf::Color& color) {
 
-	float x0 = startPoint.x;
-	float x1 = endPoint.x;
-	float y0 = startPoint.y;
-	float y1 = endPoint.y;
+	int x0 = startPoint.x;
+	int x1 = endPoint.x;
+	int y0 = startPoint.y;
+	int y1 = endPoint.y;
 
-	float dx = std::abs(x1 - x0);
-	float sx = x0 < x1 ? pix_size.x : -pix_size.x;
-	float dy = -std::abs(y1 - y0);
-	float sy = y0 < y1 ? pix_size.y : -pix_size.y;
-	float err = dx + dy;
+	int dx = std::abs(x1 - x0);
+	int sx = x0 < x1 ? 1 : -1;
+	int dy = -std::abs(y1 - y0);
+	int sy = y0 < y1 ? 1 : -1;
+	int err = dx + dy;
 
 	while (true) {
 		//Plot
-		sf::RectangleShape pixel(pix_size);
-		pixel.setFillColor(color);
-		pixel.setOrigin(pixel.getLocalBounds().width / 2, pixel.getLocalBounds().height / 2);
-		pixel.setPosition(x0, y0);
-		pixels.push_back(pixel);
-		temp.push_back(pixel);
+		if (x0 >= 0 && x0 < canvasImage.getSize().x &&
+			y0 >= 0 && y0 < canvasImage.getSize().y) {
+			canvasImage.setPixel(x0, y0, color);
+		}
 
-		float e2 = 2 * err;
+		int e2 = 2 * err; 
 		if (e2 >= dy) {
 			if (x0 == x1) break;
 			err += dy;
@@ -38,56 +36,27 @@ void draw(const sf::Vector2f& startPoint, const sf::Vector2f& endPoint, std::vec
 	}
 }
 
-void undo(std::vector<sf::RectangleShape>& temp, std::vector<std::vector<sf::RectangleShape>>& undoVec
-	, std::vector<sf::RectangleShape>& strokes, std::vector<std::vector<sf::RectangleShape>>& redoVec, std::vector<std::vector<sf::RectangleShape>>& clearVec) {
-	if (!temp.empty()) {
-		undoVec.push_back(temp);
-		temp.clear();
-
-		redoVec.clear();
-	}
-
-	if (!undoVec.empty()) {
-		const std::vector<sf::RectangleShape>& lastStroke = undoVec.back();
-		if (strokes.size() >= lastStroke.size()) {
-			strokes.resize(strokes.size() - lastStroke.size());
-			redoVec.push_back(lastStroke);
-			undoVec.pop_back();
-		}
-	}
-
-	/*if (!clearVec.empty()) {
-		strokes = clearVec.back();
-		undoVec.push_back(strokes);
-		clearVec.pop_back();
-	}*/
+void saveState(std::vector<sf::Image>& undoVec, sf::Image& canvasImage) {
+	undoVec.push_back(canvasImage);
 }
 
-void redo(std::vector<std::vector<sf::RectangleShape>>& redoVec, std::vector<sf::RectangleShape>& strokes,
-	std::vector<std::vector<sf::RectangleShape>>& undoVec) {
+void undo(std::vector<sf::Image>& undoVec , std::vector<sf::Image>& redoVec, sf::Image& canvasImage, sf::Texture& canvasTexture) {
+	if (!undoVec.empty()) {
+		redoVec.push_back(canvasImage);
+
+		canvasImage = undoVec.back();
+		canvasTexture.update(canvasImage);
+		undoVec.pop_back();
+	}
+}
+
+void redo(std::vector<sf::Image>& undoVec, std::vector<sf::Image>& redoVec, sf::Image& canvasImage, sf::Texture& canvasTexture) {
 	if (!redoVec.empty()) {
-		const std::vector<sf::RectangleShape>& lastStroke = redoVec.back();
-		strokes.insert(strokes.end(), lastStroke.begin(), lastStroke.end());
-		undoVec.push_back(lastStroke);
+		undoVec.push_back(canvasImage);
+
+		canvasImage = redoVec.back();
+		canvasTexture.update(canvasImage);
 		redoVec.pop_back();
 	}
 }
 
-void fill(sf::RectangleShape& bg, sf::Color color) {
-	bg.setFillColor(color);
-}
-
-/*void erase(sf::RenderWindow window, sf::Vector2f pixSize, std::vector<sf::RectangleShape> strokes) {
-	sf::Vector2i mousePixelPos = sf::Mouse::getPosition(window);
-	sf::Vector2f mouseWorldPos = window.mapPixelToCoords(mousePixelPos);
-
-	// Snap to grid in world coords
-	mouseWorldPos.x = static_cast<int>(mouseWorldPos.x / pixSize.x) * pixSize.x + pixSize.x / 2.f;
-	mouseWorldPos.y = static_cast<int>(mouseWorldPos.y / pixSize.y) * pixSize.y + pixSize.y / 2.f;
-
-	for (auto& pixel : strokes) {
-		if (pixel.getPosition() == mouseWorldPos) {
-			
-		}
-	}
-}*/
