@@ -62,9 +62,9 @@ void Editor::update(float deltaTime) {
 	ImGui::SetNextWindowPos(ImVec2(0, 0));
 	if (!showWin) {
 		ImGui::Begin("Project Configuration");
-		SeparatorText("Project Size");
+		SeparatorText("Project Size (Custom)");
 		ImGui::InputInt2("", projectSize);
-		SeparatorText("Size Presets (Recommended)");
+		SeparatorText("Size Presets (Low Res)");
 		if (ImGui::Button("64x64")) {
 			projectSize[width] = 64;
 			projectSize[height] = 64;
@@ -76,6 +76,19 @@ void Editor::update(float deltaTime) {
 		if (ImGui::Button("256x256")) {
 			projectSize[width] = 256;
 			projectSize[height] = 256;
+		}
+		SeparatorText("Size Presets (Higher Res)");
+		if (ImGui::Button("1280x720")) {
+			projectSize[width] = 1280;
+			projectSize[height] = 720;
+		}
+		if (ImGui::Button("1536x864")) {
+			projectSize[width] = 1536;
+			projectSize[height] = 864;
+		}
+		if (ImGui::Button("1920x1080")) {
+			projectSize[width] = 1920;
+			projectSize[height] = 1080;
 		}
 		SeparatorText("Project Name");
 		if (ImGui::InputText("", fileName, 256)) {
@@ -276,7 +289,7 @@ void Editor::update(float deltaTime) {
 
 	//Save to file CTRL+S
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl) && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S) && showWin) {
-		
+		saveFile(canvasImage, fileName);
 	}
 	//Open file CTRL+O
 	if (!isCtrlOPressed && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl) && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::O) && showWin) {
