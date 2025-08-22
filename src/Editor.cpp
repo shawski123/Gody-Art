@@ -1,20 +1,27 @@
 #include "Editor.h"
 
+Tool activeTool = Tool::None;
+
 Editor::Editor()
 	: window(sf::VideoMode(windowSize[width], windowSize[height]), "Gody Art") {
 	window.setFramerateLimit(144);
 	ImGui::SFML::Init(window);
-	undoVec.reserve(10000);
-	redoVec.reserve(10000);
-	strokes.reserve(10000);
-	bg.setFillColor(sf::Color::White);
 	ZeroMemory(&ofn, sizeof(ofn));
 	ofn.lStructSize = sizeof(ofn);
 	ofn.hwndOwner = NULL; // No specific owner window
-	ofn.lpstrFilter = "PNG Images\0*.png\0JPEG Images\0*.jpg\0";
+	ofn.lpstrFilter = "All Images\0*.png;*.jpg;*.jpeg\0";
 	ofn.lpstrFile = openFile;
 	ofn.nMaxFile = MAX_PATH;
 	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+	eraser.setSize({ 3,2 });
+	eraser.setOutlineColor(sf::Color::Black);
+	eraser.setFillColor(sf::Color::Transparent);
+	eraser.setOutlineThickness(0.5f);
+	eraser.setOrigin(eraser.getLocalBounds().width / 2, eraser.getLocalBounds().height / 2);
+	fillBucketTexture.loadFromFile("resources/BucketFill.png");
+	fillBucket.setTexture(fillBucketTexture);
+	fillBucket.setOrigin(fillBucket.getLocalBounds().width / 2, fillBucket.getLocalBounds().height / 2);
+	fillBucket.setScale({ 0.01, 0.01 });
 }
 
 void Editor::run() {
@@ -66,9 +73,9 @@ void Editor::update(float deltaTime) {
 	ImGui::SetNextWindowPos(ImVec2(0, 0));
 	if (!showWin) {
 		ImGui::Begin("Project Configuration");
-		SeparatorText("Project Size");
+		SeparatorText("Project Size (Custom)");
 		ImGui::InputInt2("", projectSize);
-		SeparatorText("Size Presets (Recommended)");
+		SeparatorText("Size Presets (Low Res)");
 		if (ImGui::Button("64x64")) {
 			projectSize[width] = 64;
 			projectSize[height] = 64;
@@ -80,6 +87,19 @@ void Editor::update(float deltaTime) {
 		if (ImGui::Button("256x256")) {
 			projectSize[width] = 256;
 			projectSize[height] = 256;
+		}
+		SeparatorText("Size Presets (Higher Res)");
+		if (ImGui::Button("1280x720")) {
+			projectSize[width] = 1280;
+			projectSize[height] = 720;
+		}
+		if (ImGui::Button("1536x864")) {
+			projectSize[width] = 1536;
+			projectSize[height] = 864;
+		}
+		if (ImGui::Button("1920x1080")) {
+			projectSize[width] = 1920;
+			projectSize[height] = 1080;
 		}
 		SeparatorText("Project Name");
 		if (ImGui::InputText("", fileName, 256)) {
@@ -95,16 +115,17 @@ void Editor::update(float deltaTime) {
 			view.setSize(static_cast<float>(windowSize[width]), static_cast<float>(windowSize[height]));
 			view.setCenter(windowSize[width] / 2.f, windowSize[height] / 2.f);
 			window.setView(view);
-			bg.setSize(sf::Vector2f(windowSize[width], windowSize[height]));
 
 			window.setPosition(sf::Vector2i(
 				(desktop.width - window.getSize().x) / 2,
 				(desktop.height - window.getSize().y) / 2
 			));
 			//Set project size
-			bg.setSize(sf::Vector2f(projectSize[width], projectSize[height]));
-			bg.setOrigin(bg.getLocalBounds().width / 2, bg.getLocalBounds().height / 2);
-			bg.setPosition({ 640, 360 });
+			canvasImage.create(projectSize[width], projectSize[height], sf::Color::White);
+			canvasTexture.loadFromImage(canvasImage);
+			canvasSprite.setTexture(canvasTexture);
+			canvasSprite.setOrigin(canvasSprite.getLocalBounds().width / 2, canvasSprite.getLocalBounds().height / 2);
+			canvasSprite.setPosition(canvasMovement);
 			showWin = true;
 		}
 		ImGui::End();
@@ -129,7 +150,7 @@ void Editor::update(float deltaTime) {
 					}
 				}
 				if (ImGui::MenuItem("Save", "Ctrl+S")) {
-					saveFile(projectSize, strokes, fileName, bg);
+					
 				}
 				if (ImGui::MenuItem("Close", "Ctrl+W")) {
 					if (MessageBoxA(NULL, "Are you sure?", "Exit", MB_YESNO | MB_ICONEXCLAMATION) == 6) {
@@ -147,6 +168,9 @@ void Editor::update(float deltaTime) {
 		}
 
 		if (hasImage) {
+
+			ImGui::SliderFloat("Transparency", &imageTransparency, 0, 255);
+
 			if (ImGui::Button(hideOrshow)) {
 				if (countHideOrShow == false) {
 					hideOrshow = "Show Image";
@@ -159,10 +183,6 @@ void Editor::update(float deltaTime) {
 					spriteOn = true;
 				}
 			}
-		}
-
-		if (ImGui::InputFloat("px", &singlePixSize)) {
-			pixSize = { singlePixSize, singlePixSize };
 		}
 
 		if (ImGui::Button(hideOrshowCtrls)) {
@@ -182,16 +202,25 @@ void Editor::update(float deltaTime) {
 	}
 
 	if (showControls) {
-		ImGui::SetNextWindowSize(ImVec2(550, 170), ImGuiCond_Appearing);
+		ImGui::SetNextWindowSize(ImVec2(600, 170), ImGuiCond_Appearing);
 		ImGui::SetNextWindowPos(ImVec2(320, 0), ImGuiCond_Appearing);
 		ImGui::Begin("Controls");
 		ImGui::Text("LControl + O = Open");
-		ImGui::Text("LControl + S = Save");
-		ImGui::Text("LControl + W = Quit");
+		ImGui::SameLine();
+		ImGui::Text("| LControl + S = Save");
+		ImGui::SameLine();
+		ImGui::Text("| LControl + W = Quit");
 		ImGui::Text("LControl + Z = Undo");
-		ImGui::Text("LControl + Shift + Z = Redo");
+		ImGui::SameLine();
+		ImGui::Text("| LControl + Shift + Z = Redo");
 		ImGui::Text("WASD = Move in canvas");
-		ImGui::Text("LShift = Precision Mode (Slows movement speed in canvas)");
+		ImGui::SameLine();
+		ImGui::Text("| LShift = Precision mode (Slows movement speed in canvas)");
+		ImGui::Text("LMB = Draw");
+		ImGui::SameLine();
+		ImGui::Text("| F + LMB = Fill");
+		ImGui::SameLine();
+		ImGui::Text("| RMB = Erase");
 
 		ImGui::End();
 	}
@@ -202,85 +231,106 @@ void Editor::update(float deltaTime) {
 		static_cast<sf::Uint8>(myColor[2] * 255)
 	);
 
-	//Opened image
 
+	//Fill
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F) && showWin) {
+		activeTool = Tool::Fill;
+	}
+	//Erase
+	if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Right) && showWin) {
+		activeTool = Tool::Erase;
+	}
 	//Draw
-	if (!ImGui::GetIO().WantCaptureMouse && sf::Mouse::isButtonPressed(sf::Mouse::Left) && inFocus && !isFPressed) {
+	if (!ImGui::GetIO().WantCaptureMouse && sf::Mouse::isButtonPressed(sf::Mouse::Button::Left) && inFocus && showWin && activeTool != Tool::Fill) {
+		activeTool = Tool::Draw;
+	}
+
+	//Decide what to do
+	switch (activeTool) {
+	case Tool::Draw: {
 		sf::Vector2i mousePixelPos = sf::Mouse::getPosition(window);
 		sf::Vector2f mouseWorldPos = window.mapPixelToCoords(mousePixelPos);
 
-		// Snap to grid in world coords
-		mouseWorldPos.x = static_cast<int>(mouseWorldPos.x / pixSize.x) * pixSize.x + pixSize.x / 2.f;
-		mouseWorldPos.y = static_cast<int>(mouseWorldPos.y / pixSize.y) * pixSize.y + pixSize.y / 2.f;
+		sf::Vector2f localPos = mouseWorldPos - canvasSprite.getPosition();
+		localPos += { canvasSprite.getLocalBounds().width / 2.f,
+			canvasSprite.getLocalBounds().height / 2.f };
+
+		sf::Vector2i imagePos(localPos.x, localPos.y);
 
 		if (hasClicked) {
-			firstPos = mouseWorldPos;
+			saveState(undoVec, canvasImage);
+			std::cout << "Draw save\n";
+			firstPos = imagePos;
 			hasClicked = false;
 		}
 		else {
-			if (bg.getGlobalBounds().contains(mouseWorldPos)) {
-				draw(firstPos, mouseWorldPos, strokes, pixSize, color, temp);
+			if (canvasSprite.getGlobalBounds().contains(mouseWorldPos)) {
+				draw(firstPos, imagePos, canvasImage, color);
+				canvasTexture.update(canvasImage);
 			}
 
-			firstPos = mouseWorldPos;
+			firstPos = imagePos;
 		}
-	}
-	else if (!temp.empty()) {
-		undoVec.push_back(temp);
-		temp.clear();
-	}
-	else {
-		hasClicked = true;
-	}
 
-	//Erase
-	if (!ImGui::GetIO().WantCaptureMouse && sf::Mouse::isButtonPressed(sf::Mouse::Right)) {
+		if (!sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) {
+			hasClicked = true;
+			activeTool = Tool::None;
+		}
+		break;
+	}
+	case Tool::Erase: {
+		isFillOn = false;
+		if (saveErase) {
+			saveState(undoVec, canvasImage);
+			saveErase = false;
+		}
+		isEraserOn = true;
+		erase(canvasImage, canvasTexture, canvasSprite, window, eraser);
+
+		if (!sf::Mouse::isButtonPressed(sf::Mouse::Button::Right)) {
+			isEraserOn = false;
+			saveErase = true;
+			activeTool = Tool::None;
+		}
+		break;
+	}
+	case Tool::Fill: {
 		sf::Vector2i mousePixelPos = sf::Mouse::getPosition(window);
 		sf::Vector2f mouseWorldPos = window.mapPixelToCoords(mousePixelPos);
 
-		// Snap to grid in world coords
-		mouseWorldPos.x = static_cast<int>(mouseWorldPos.x / pixSize.x) * pixSize.x + pixSize.x / 2.f;
-		mouseWorldPos.y = static_cast<int>(mouseWorldPos.y / pixSize.y) * pixSize.y + pixSize.y / 2.f;
+		sf::Vector2f localPos = mouseWorldPos - canvasSprite.getPosition();
+		localPos += { canvasSprite.getLocalBounds().width / 2.f,
+			canvasSprite.getLocalBounds().height / 2.f };
 
-		for (auto it = strokes.begin(); it != strokes.end();) {
-			if (it->getPosition() == mouseWorldPos) {
-				it = strokes.erase(it);
-			}
-			else {
-				it++;
-			}
+		sf::Vector2i imagePos(localPos.x, localPos.y);
+
+		fillBucket.setPosition(mouseWorldPos);
+		isFillOn = true;
+
+		if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) {
+			saveState(undoVec, canvasImage);
+
+			floodFill(canvasImage, color, imagePos);
+			canvasTexture.update(canvasImage);
+
+			isFillOn = false;
+			activeTool = Tool::None;
 		}
+		break;
 	}
-
-	//Fill
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F)) {
-		isFPressed = true;
-	}
-	if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left) && isFPressed && 
-		bg.getGlobalBounds().contains(window.mapPixelToCoords(sf::Mouse::getPosition(window)))) {
-
-		fill(bg, color);
-		isFPressed = false;
+	default:
+		break;
 	}
 
 	//Clears screen
 	if (clear == true) {
-		redoVec.clear();
-		//clearVec.push_back(strokes);
-		undoVec.clear();
-		strokes.clear();
-		hasImage = false;
-		spriteOn = false;
-		bg.setFillColor(sf::Color::White);
-		hideOrshow = "Hide image";
-		countHideOrShow = false;
-		clear = false;
+		clearScreen();
 	}
 
 	//Undo CTRL+Z
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl) && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Z) 
 		&& !sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LShift) && !isCtrlZPressed) {
-		undo(temp, undoVec, strokes, redoVec, clearVec);
+		undo(undoVec, redoVec, canvasImage, canvasTexture);
 		isCtrlZPressed = true;
 	}
 	if (!sf::Keyboard::isKeyPressed(sf::Keyboard::LControl) || !sf::Keyboard::isKeyPressed(sf::Keyboard::Z)) {
@@ -290,7 +340,7 @@ void Editor::update(float deltaTime) {
 	//Redo CTRL+Shift+Z
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl) && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LShift) &&
 		sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Z) && !isCtrlSZPressed) {
-		redo(redoVec, strokes, undoVec);
+		redo(undoVec, redoVec, canvasImage, canvasTexture);
 		isCtrlSZPressed = true;
 	}
 	if (!sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl) || !sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LShift) ||
@@ -307,7 +357,7 @@ void Editor::update(float deltaTime) {
 
 	//Save to file CTRL+S
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl) && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S) && showWin) {
-		saveFile(projectSize, strokes, fileName, bg);
+		saveFile(canvasImage, fileName);
 	}
 	//Open file CTRL+O
 	if (!isCtrlOPressed && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl) && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::O) && showWin) {
@@ -357,22 +407,30 @@ void Editor::update(float deltaTime) {
 
 void Editor::render() {
 	window.clear();
-	window.draw(bg);
+	window.draw(canvasSprite);
 	if (spriteOn) {
-		window.draw(sprite);
+		sf::Color color = imageSprite.getColor();
+		color.a = imageTransparency;
+		imageSprite.setColor(color);
+		window.draw(imageSprite);
 	}
-	for (auto& pixel : strokes) window.draw(pixel);
+	if (isEraserOn) {
+		window.draw(eraser);
+	}
+	if (isFillOn) {
+		window.draw(fillBucket);
+	}
 	ImGui::SFML::Render(window);
 	window.display();
 }
 
 void Editor::loadImage(const char* filename) {
-	if (texture.loadFromFile(filename)) {
+	if (imageTexture.loadFromFile(filename)) {
 		std::cout << "Loaded from " << filename << std::endl;
-		sprite.setTexture(texture);
-		sf::Vector2f spriteSize(texture.getSize().x, texture.getSize().y);
-		sprite.setOrigin({ spriteSize.x / 2, spriteSize.y / 2 });
-		sprite.setPosition(bg.getPosition());
+		imageSprite.setTexture(imageTexture);
+		sf::Vector2f spriteSize(imageTexture.getSize().x, imageTexture.getSize().y);
+		imageSprite.setOrigin(imageSprite.getLocalBounds().width / 2, imageSprite.getLocalBounds().height / 2);
+		imageSprite.setPosition(640, 360);
 
 		float scaleFactor = 1.0f;
 		if (spriteSize.x > projectSize[width] || spriteSize.y > projectSize[height]) {
@@ -381,8 +439,27 @@ void Editor::loadImage(const char* filename) {
 			scaleFactor = std::min(scaleX, scaleY);
 		}
 
-		sprite.scale(scaleFactor, scaleFactor);
+		imageSprite.setScale(scaleFactor, scaleFactor);
 		hasImage = true;
 		spriteOn = true;
 	}
+}
+
+void Editor::resetImage() {
+	imageSprite = sf::Sprite();
+	imageTexture = sf::Texture();
+
+	hasImage = false;
+	spriteOn = false;
+	hideOrshow = "Hide image";
+	countHideOrShow = false;
+}
+
+void Editor::clearScreen() {
+	resetImage();
+
+	clear = false;
+	saveState(undoVec, canvasImage);
+	canvasImage.create(projectSize[width], projectSize[height], sf::Color::White);
+	canvasTexture.update(canvasImage);
 }

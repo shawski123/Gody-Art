@@ -14,6 +14,15 @@ enum {
 	height
 };
 
+enum class Tool {
+	None,
+	Draw,
+	Erase,
+	Fill
+};
+
+extern Tool activeTool;
+
 class Editor {
 public:
 	Editor();
@@ -23,12 +32,14 @@ private:
 	void update(float dt);
 	void render();
 	void loadImage(const char* fileName);
+
+	void clearScreen();
+	void resetImage();
 	
 	//State variables
 	bool isCtrlZPressed = false;
 	bool isCtrlSZPressed = false;
 	bool isCtrlOPressed = false;
-	bool isFPressed = false;
 	bool spriteOn = true;
 	char* hideOrshow = "Hide Image";
 	int windowSize[2] = { 600,600 }; // 600,600 by default
@@ -44,9 +55,14 @@ private:
 	char* hideOrshowCtrls = "Show Controls";
 	bool countCtrl = false;
 	bool inFocus = true;
-	bool hasClicked = true;
 	bool myToolActive = true;
 	bool clear = false;
+
+	bool hasClicked = true;
+	bool saveErase = true;
+	bool isEraserOn = false;
+
+	bool isFillOn = false;
 
 	//Window
 	sf::RenderWindow window;
@@ -56,19 +72,22 @@ private:
 	OPENFILENAME ofn;
 	char openFile[MAX_PATH] = "";
 
+	//Canvas
+	sf::Image canvasImage;
+	sf::Texture canvasTexture;
+	sf::Sprite canvasSprite;
+	
 	//Drawing
-	sf::Sprite sprite;
-	sf::Vector2f firstPos;
-	sf::Texture texture;
-	sf::Vector2f pixSize = { 10,10 };
-	float singlePixSize = 20;
+	sf::RectangleShape eraser;
+	sf::Sprite fillBucket;
+	sf::Texture fillBucketTexture;
+	std::vector<sf::Image> undoVec;
+	std::vector<sf::Image> redoVec;
+	sf::Sprite imageSprite;
+	sf::Vector2i firstPos;
+	sf::Texture imageTexture;
 	float myColor[3] = { 0.f,0.f,0.f };
-	std::vector<std::vector<sf::RectangleShape>> undoVec;
-	std::vector<sf::RectangleShape> temp;
-	std::vector<std::vector<sf::RectangleShape>> redoVec;
-	std::vector<sf::RectangleShape> strokes;
-	std::vector<std::vector<sf::RectangleShape>> clearVec;
-	sf::RectangleShape bg;
+	float imageTransparency = 255;
 
 	sf::VideoMode desktop = sf::VideoMode::getDesktopMode();
 

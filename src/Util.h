@@ -6,4 +6,4 @@
 #include "Editor.h"
 
 void SeparatorText(const char* label);
-void saveFile(int projectSize[], std::vector<sf::RectangleShape>& strokes, const char* fileName, const sf::RectangleShape& bg);
+void saveFile(sf::Image& canvasImage, const char* fileName);
