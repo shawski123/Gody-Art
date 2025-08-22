@@ -1,5 +1,7 @@
 #include "Editor.h"
 
+Tool activeTool = Tool::None;
+
 Editor::Editor()
 	: window(sf::VideoMode(windowSize[width], windowSize[height]), "Gody Art") {
 	window.setFramerateLimit(144);
@@ -16,6 +18,10 @@ Editor::Editor()
 	eraser.setFillColor(sf::Color::Transparent);
 	eraser.setOutlineThickness(0.5f);
 	eraser.setOrigin(eraser.getLocalBounds().width / 2, eraser.getLocalBounds().height / 2);
+	fillBucketTexture.loadFromFile("resources/BucketFill.png");
+	fillBucket.setTexture(fillBucketTexture);
+	fillBucket.setOrigin(fillBucket.getLocalBounds().width / 2, fillBucket.getLocalBounds().height / 2);
+	fillBucket.setScale({ 0.01, 0.01 });
 }
 
 void Editor::run() {
@@ -196,16 +202,25 @@ void Editor::update(float deltaTime) {
 	}
 
 	if (showControls) {
-		ImGui::SetNextWindowSize(ImVec2(550, 170), ImGuiCond_Appearing);
+		ImGui::SetNextWindowSize(ImVec2(600, 170), ImGuiCond_Appearing);
 		ImGui::SetNextWindowPos(ImVec2(320, 0), ImGuiCond_Appearing);
 		ImGui::Begin("Controls");
 		ImGui::Text("LControl + O = Open");
-		ImGui::Text("LControl + S = Save");
-		ImGui::Text("LControl + W = Quit");
+		ImGui::SameLine();
+		ImGui::Text("| LControl + S = Save");
+		ImGui::SameLine();
+		ImGui::Text("| LControl + W = Quit");
 		ImGui::Text("LControl + Z = Undo");
-		ImGui::Text("LControl + Shift + Z = Redo");
+		ImGui::SameLine();
+		ImGui::Text("| LControl + Shift + Z = Redo");
 		ImGui::Text("WASD = Move in canvas");
-		ImGui::Text("LShift = Precision Mode (Slows movement speed in canvas)");
+		ImGui::SameLine();
+		ImGui::Text("| LShift = Precision mode (Slows movement speed in canvas)");
+		ImGui::Text("LMB = Draw");
+		ImGui::SameLine();
+		ImGui::Text("| F + LMB = Fill");
+		ImGui::SameLine();
+		ImGui::Text("| RMB = Erase");
 
 		ImGui::End();
 	}
@@ -216,10 +231,23 @@ void Editor::update(float deltaTime) {
 		static_cast<sf::Uint8>(myColor[2] * 255)
 	);
 
-	//Opened image
 
+	//Fill
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F) && showWin) {
+		activeTool = Tool::Fill;
+	}
+	//Erase
+	if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Right) && showWin) {
+		activeTool = Tool::Erase;
+	}
 	//Draw
-	if (!ImGui::GetIO().WantCaptureMouse && sf::Mouse::isButtonPressed(sf::Mouse::Button::Left) && inFocus && !isFPressed && showWin) {
+	if (!ImGui::GetIO().WantCaptureMouse && sf::Mouse::isButtonPressed(sf::Mouse::Button::Left) && inFocus && showWin && activeTool != Tool::Fill) {
+		activeTool = Tool::Draw;
+	}
+
+	//Decide what to do
+	switch (activeTool) {
+	case Tool::Draw: {
 		sf::Vector2i mousePixelPos = sf::Mouse::getPosition(window);
 		sf::Vector2f mouseWorldPos = window.mapPixelToCoords(mousePixelPos);
 
@@ -231,6 +259,7 @@ void Editor::update(float deltaTime) {
 
 		if (hasClicked) {
 			saveState(undoVec, canvasImage);
+			std::cout << "Draw save\n";
 			firstPos = imagePos;
 			hasClicked = false;
 		}
@@ -242,33 +271,55 @@ void Editor::update(float deltaTime) {
 
 			firstPos = imagePos;
 		}
-	}
-	else {
-		hasClicked = true;
-	}
 
-	//Erase
-	if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Right) && showWin) {
+		if (!sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) {
+			hasClicked = true;
+			activeTool = Tool::None;
+		}
+		break;
+	}
+	case Tool::Erase: {
+		isFillOn = false;
 		if (saveErase) {
 			saveState(undoVec, canvasImage);
 			saveErase = false;
 		}
 		isEraserOn = true;
 		erase(canvasImage, canvasTexture, canvasSprite, window, eraser);
-	}
-	if (!sf::Mouse::isButtonPressed(sf::Mouse::Button::Right)) {
-		isEraserOn = false;
-		saveErase = true;
-	}
 
-	//Fill
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F) && showWin) {
-		isFPressed = true;
+		if (!sf::Mouse::isButtonPressed(sf::Mouse::Button::Right)) {
+			isEraserOn = false;
+			saveErase = true;
+			activeTool = Tool::None;
+		}
+		break;
 	}
-	if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left) && isFPressed && 
-		canvasSprite.getGlobalBounds().contains(window.mapPixelToCoords(sf::Mouse::getPosition(window)))) {
+	case Tool::Fill: {
+		sf::Vector2i mousePixelPos = sf::Mouse::getPosition(window);
+		sf::Vector2f mouseWorldPos = window.mapPixelToCoords(mousePixelPos);
 
-		isFPressed = false;
+		sf::Vector2f localPos = mouseWorldPos - canvasSprite.getPosition();
+		localPos += { canvasSprite.getLocalBounds().width / 2.f,
+			canvasSprite.getLocalBounds().height / 2.f };
+
+		sf::Vector2i imagePos(localPos.x, localPos.y);
+
+		fillBucket.setPosition(mouseWorldPos);
+		isFillOn = true;
+
+		if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) {
+			saveState(undoVec, canvasImage);
+
+			floodFill(canvasImage, color, imagePos);
+			canvasTexture.update(canvasImage);
+
+			isFillOn = false;
+			activeTool = Tool::None;
+		}
+		break;
+	}
+	default:
+		break;
 	}
 
 	//Clears screen
@@ -366,6 +417,9 @@ void Editor::render() {
 	if (isEraserOn) {
 		window.draw(eraser);
 	}
+	if (isFillOn) {
+		window.draw(fillBucket);
+	}
 	ImGui::SFML::Render(window);
 	window.display();
 }
@@ -375,7 +429,8 @@ void Editor::loadImage(const char* filename) {
 		std::cout << "Loaded from " << filename << std::endl;
 		imageSprite.setTexture(imageTexture);
 		sf::Vector2f spriteSize(imageTexture.getSize().x, imageTexture.getSize().y);
-		imageSprite.setPosition(canvasMovement);
+		imageSprite.setOrigin(imageSprite.getLocalBounds().width / 2, imageSprite.getLocalBounds().height / 2);
+		imageSprite.setPosition(640, 360);
 
 		float scaleFactor = 1.0f;
 		if (spriteSize.x > projectSize[width] || spriteSize.y > projectSize[height]) {
@@ -390,12 +445,19 @@ void Editor::loadImage(const char* filename) {
 	}
 }
 
-void Editor::clearScreen() {
-	std::cout << "Sprite Scale X: " << imageSprite.getScale().x << " Y: " << imageSprite.getScale().y << std::endl;
+void Editor::resetImage() {
+	imageSprite = sf::Sprite();
+	imageTexture = sf::Texture();
+
 	hasImage = false;
 	spriteOn = false;
 	hideOrshow = "Hide image";
 	countHideOrShow = false;
+}
+
+void Editor::clearScreen() {
+	resetImage();
+
 	clear = false;
 	saveState(undoVec, canvasImage);
 	canvasImage.create(projectSize[width], projectSize[height], sf::Color::White);

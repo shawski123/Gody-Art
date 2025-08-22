@@ -14,6 +14,15 @@ enum {
 	height
 };
 
+enum class Tool {
+	None,
+	Draw,
+	Erase,
+	Fill
+};
+
+extern Tool activeTool;
+
 class Editor {
 public:
 	Editor();
@@ -23,13 +32,14 @@ private:
 	void update(float dt);
 	void render();
 	void loadImage(const char* fileName);
+
 	void clearScreen();
+	void resetImage();
 	
 	//State variables
 	bool isCtrlZPressed = false;
 	bool isCtrlSZPressed = false;
 	bool isCtrlOPressed = false;
-	bool isFPressed = false;
 	bool spriteOn = true;
 	char* hideOrshow = "Hide Image";
 	int windowSize[2] = { 600,600 }; // 600,600 by default
@@ -45,11 +55,14 @@ private:
 	char* hideOrshowCtrls = "Show Controls";
 	bool countCtrl = false;
 	bool inFocus = true;
-	bool hasClicked = true;
 	bool myToolActive = true;
 	bool clear = false;
+
+	bool hasClicked = true;
+	bool saveErase = true;
 	bool isEraserOn = false;
-	bool saveErase = false;
+
+	bool isFillOn = false;
 
 	//Window
 	sf::RenderWindow window;
@@ -66,6 +79,8 @@ private:
 	
 	//Drawing
 	sf::RectangleShape eraser;
+	sf::Sprite fillBucket;
+	sf::Texture fillBucketTexture;
 	std::vector<sf::Image> undoVec;
 	std::vector<sf::Image> redoVec;
 	sf::Sprite imageSprite;

@@ -1,4 +1,6 @@
 #include <iostream>
+#include <vector>
+#include <queue>
 #include <SFML/Graphics.hpp>
 
 void draw(const sf::Vector2i& startPoint, const sf::Vector2i& endPoint, sf::Image& canvasImage, const sf::Color& color);
@@ -7,4 +9,4 @@ void undo(std::vector<sf::Image>& undoVec, std::vector<sf::Image>& redoVec, sf::
 void redo(std::vector<sf::Image>& undoVec, std::vector<sf::Image>& redoVec, sf::Image& canvasImage, sf::Texture& canvasTexture);
 void erase(sf::Image& canvasImage, sf::Texture& canvasTexture, const sf::Sprite& canvasSprite, const sf::RenderWindow& window, sf::RectangleShape& eraser);
 
-//void fill();
+void floodFill(sf::Image& canvasImage, sf::Color newColor, sf::Vector2i mousePos);

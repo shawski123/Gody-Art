@@ -84,3 +84,34 @@ void erase(sf::Image& canvasImage, sf::Texture& canvasTexture, const sf::Sprite&
 	canvasTexture.update(canvasImage);
 }
 
+void floodFill(sf::Image& canvasImage, sf::Color newColor, sf::Vector2i mousePos) {
+	if (canvasImage.getPixel(mousePos.x, mousePos.y) == newColor) return;
+
+	std::vector<std::pair<int, int>> directions = {
+		{1, 0}, {-1, 0}, {0,1}, {0,-1} };
+	
+	std::queue<std::pair<int, int>> q;
+	sf::Color oldColor = canvasImage.getPixel(mousePos.x, mousePos.y);
+	q.push({ mousePos.x, mousePos.y });
+
+	canvasImage.setPixel(mousePos.x, mousePos.y, newColor);
+
+	while (!q.empty()) {
+		std::pair<int, int> front = q.front();
+		int x = front.first, y = front.second;
+		q.pop();
+
+		for (const std::pair<int, int>& direction : directions) {
+			int nx = x + direction.first;
+			int ny = y + direction.second;
+
+			if (nx >= 0 && nx < canvasImage.getSize().x &&
+				ny >= 0 && ny < canvasImage.getSize().y &&
+				canvasImage.getPixel(nx, ny) == oldColor) {
+				
+				canvasImage.setPixel(nx, ny, newColor);
+				q.push({ nx, ny });
+			}
+		}
+	}
+}
