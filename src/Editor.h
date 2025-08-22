@@ -48,6 +48,8 @@ private:
 	bool hasClicked = true;
 	bool myToolActive = true;
 	bool clear = false;
+	bool isEraserOn = false;
+	bool saveErase = false;
 
 	//Window
 	sf::RenderWindow window;
@@ -63,6 +65,7 @@ private:
 	sf::Sprite canvasSprite;
 	
 	//Drawing
+	sf::RectangleShape eraser;
 	std::vector<sf::Image> undoVec;
 	std::vector<sf::Image> redoVec;
 	sf::Sprite imageSprite;

@@ -11,6 +11,11 @@ Editor::Editor()
 	ofn.lpstrFile = openFile;
 	ofn.nMaxFile = MAX_PATH;
 	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+	eraser.setSize({ 3,2 });
+	eraser.setOutlineColor(sf::Color::Black);
+	eraser.setFillColor(sf::Color::Transparent);
+	eraser.setOutlineThickness(0.5f);
+	eraser.setOrigin(eraser.getLocalBounds().width / 2, eraser.getLocalBounds().height / 2);
 }
 
 void Editor::run() {
@@ -214,7 +219,7 @@ void Editor::update(float deltaTime) {
 	//Opened image
 
 	//Draw
-	if (!ImGui::GetIO().WantCaptureMouse && sf::Mouse::isButtonPressed(sf::Mouse::Left) && inFocus && !isFPressed) {
+	if (!ImGui::GetIO().WantCaptureMouse && sf::Mouse::isButtonPressed(sf::Mouse::Button::Left) && inFocus && !isFPressed && showWin) {
 		sf::Vector2i mousePixelPos = sf::Mouse::getPosition(window);
 		sf::Vector2f mouseWorldPos = window.mapPixelToCoords(mousePixelPos);
 
@@ -243,9 +248,21 @@ void Editor::update(float deltaTime) {
 	}
 
 	//Erase
+	if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Right) && showWin) {
+		if (saveErase) {
+			saveState(undoVec, canvasImage);
+			saveErase = false;
+		}
+		isEraserOn = true;
+		erase(canvasImage, canvasTexture, canvasSprite, window, eraser);
+	}
+	if (!sf::Mouse::isButtonPressed(sf::Mouse::Button::Right)) {
+		isEraserOn = false;
+		saveErase = true;
+	}
 
 	//Fill
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F)) {
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F) && showWin) {
 		isFPressed = true;
 	}
 	if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left) && isFPressed && 
@@ -346,6 +363,9 @@ void Editor::render() {
 		imageSprite.setColor(color);
 		window.draw(imageSprite);
 	}
+	if (isEraserOn) {
+		window.draw(eraser);
+	}
 	ImGui::SFML::Render(window);
 	window.display();
 }
@@ -355,8 +375,7 @@ void Editor::loadImage(const char* filename) {
 		std::cout << "Loaded from " << filename << std::endl;
 		imageSprite.setTexture(imageTexture);
 		sf::Vector2f spriteSize(imageTexture.getSize().x, imageTexture.getSize().y);
-		imageSprite.setOrigin({ spriteSize.x / 2, spriteSize.y / 2 });
-		imageSprite.setPosition(canvasSprite.getPosition());
+		imageSprite.setPosition(canvasMovement);
 
 		float scaleFactor = 1.0f;
 		if (spriteSize.x > projectSize[width] || spriteSize.y > projectSize[height]) {
@@ -365,13 +384,14 @@ void Editor::loadImage(const char* filename) {
 			scaleFactor = std::min(scaleX, scaleY);
 		}
 
-		imageSprite.scale(scaleFactor, scaleFactor);
+		imageSprite.setScale(scaleFactor, scaleFactor);
 		hasImage = true;
 		spriteOn = true;
 	}
 }
 
 void Editor::clearScreen() {
+	std::cout << "Sprite Scale X: " << imageSprite.getScale().x << " Y: " << imageSprite.getScale().y << std::endl;
 	hasImage = false;
 	spriteOn = false;
 	hideOrshow = "Hide image";

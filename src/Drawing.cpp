@@ -38,6 +38,7 @@ void draw(const sf::Vector2i& startPoint, const sf::Vector2i& endPoint, sf::Imag
 
 void saveState(std::vector<sf::Image>& undoVec, sf::Image& canvasImage) {
 	undoVec.push_back(canvasImage);
+	std::cout << "Saved\n";
 }
 
 void undo(std::vector<sf::Image>& undoVec , std::vector<sf::Image>& redoVec, sf::Image& canvasImage, sf::Texture& canvasTexture) {
@@ -53,10 +54,33 @@ void undo(std::vector<sf::Image>& undoVec , std::vector<sf::Image>& redoVec, sf:
 void redo(std::vector<sf::Image>& undoVec, std::vector<sf::Image>& redoVec, sf::Image& canvasImage, sf::Texture& canvasTexture) {
 	if (!redoVec.empty()) {
 		undoVec.push_back(canvasImage);
-
 		canvasImage = redoVec.back();
 		canvasTexture.update(canvasImage);
 		redoVec.pop_back();
 	}
+}
+
+void erase(sf::Image& canvasImage, sf::Texture& canvasTexture, const sf::Sprite& canvasSprite, const sf::RenderWindow& window, sf::RectangleShape& eraser) {
+	sf::Vector2i mousePixelPos = sf::Mouse::getPosition(window);
+	sf::Vector2f mouseWorldPos = window.mapPixelToCoords(mousePixelPos);
+	
+	eraser.setPosition(mouseWorldPos);
+
+	sf::Vector2f localPos = mouseWorldPos - canvasSprite.getPosition();
+	localPos += { canvasSprite.getLocalBounds().width / 2.f,
+		canvasSprite.getLocalBounds().height / 2.f };
+
+	sf::Vector2i imagePos(localPos.x, localPos.y);
+	
+	canvasImage.setPixel(imagePos.x, imagePos.y, sf::Color::White);
+	canvasImage.setPixel(imagePos.x+1, imagePos.y, sf::Color::White);
+	canvasImage.setPixel(imagePos.x-1, imagePos.y, sf::Color::White);
+	canvasImage.setPixel(imagePos.x, imagePos.y+1, sf::Color::White);
+	canvasImage.setPixel(imagePos.x, imagePos.y-1, sf::Color::White);
+	canvasImage.setPixel(imagePos.x+1, imagePos.y+1, sf::Color::White);
+	canvasImage.setPixel(imagePos.x-1, imagePos.y-1, sf::Color::White);
+	canvasImage.setPixel(imagePos.x+1, imagePos.y-1, sf::Color::White);
+	canvasImage.setPixel(imagePos.x-1, imagePos.y+1, sf::Color::White);
+	canvasTexture.update(canvasImage);
 }
 
