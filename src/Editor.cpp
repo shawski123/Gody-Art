@@ -215,7 +215,9 @@ void Editor::update(float deltaTime) {
 		ImGui::Text("| LShift = Precision mode (Slows movement speed in canvas)");
 		ImGui::Text("LMB = Draw");
 		ImGui::SameLine();
-		ImGui::Text("| F + LMB = Fill");
+		ImGui::Text("| F = Fill");
+		ImGui::SameLine();
+		ImGui::Text("| G = Dropper");
 		ImGui::SameLine();
 		ImGui::Text("| RMB = Erase");
 
