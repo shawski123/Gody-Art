@@ -18,7 +18,8 @@ enum class Tool {
 	None,
 	Draw,
 	Erase,
-	Fill
+	Fill,
+	Dropper
 };
 
 extern Tool activeTool;
@@ -35,6 +36,7 @@ private:
 
 	void clearScreen();
 	void resetImage();
+	sf::Vector2i Editor::getImageMousePos();
 	
 	//State variables
 	bool isCtrlZPressed = false;
@@ -61,8 +63,8 @@ private:
 	bool hasClicked = true;
 	bool saveErase = true;
 	bool isEraserOn = false;
-
-	bool isFillOn = false;
+	bool isFClicked = true;
+	bool isGClicked = true;
 
 	//Window
 	sf::RenderWindow window;
@@ -79,8 +81,6 @@ private:
 	
 	//Drawing
 	sf::RectangleShape eraser;
-	sf::Sprite fillBucket;
-	sf::Texture fillBucketTexture;
 	std::vector<sf::Image> undoVec;
 	std::vector<sf::Image> redoVec;
 	sf::Sprite imageSprite;

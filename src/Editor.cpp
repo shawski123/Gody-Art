@@ -13,15 +13,12 @@ Editor::Editor()
 	ofn.lpstrFile = openFile;
 	ofn.nMaxFile = MAX_PATH;
 	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+
 	eraser.setSize({ 3,2 });
 	eraser.setOutlineColor(sf::Color::Black);
 	eraser.setFillColor(sf::Color::Transparent);
 	eraser.setOutlineThickness(0.5f);
 	eraser.setOrigin(eraser.getLocalBounds().width / 2, eraser.getLocalBounds().height / 2);
-	fillBucketTexture.loadFromFile("resources/BucketFill.png");
-	fillBucket.setTexture(fillBucketTexture);
-	fillBucket.setOrigin(fillBucket.getLocalBounds().width / 2, fillBucket.getLocalBounds().height / 2);
-	fillBucket.setScale({ 0.01, 0.01 });
 }
 
 void Editor::run() {
@@ -232,22 +229,39 @@ void Editor::update(float deltaTime) {
 	);
 
 
-	//Fill
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F) && showWin) {
-		activeTool = Tool::Fill;
+		if (isFClicked) {
+			activeTool = Tool::Fill;
+			isFClicked = false;
+		}
 	}
-	//Erase
+	if (!sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F)) {
+		isFClicked = true;
+	}
+	
 	if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Right) && showWin) {
 		activeTool = Tool::Erase;
 	}
-	//Draw
+
 	if (!ImGui::GetIO().WantCaptureMouse && sf::Mouse::isButtonPressed(sf::Mouse::Button::Left) && inFocus && showWin && activeTool != Tool::Fill) {
 		activeTool = Tool::Draw;
+	}
+
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::G)) {
+		if (isGClicked) {
+			activeTool = Tool::Dropper;
+			isGClicked = false;
+		}
+	}
+	if (!sf::Keyboard::isKeyPressed(sf::Keyboard::Key::G)) {
+		isGClicked = true;
 	}
 
 	//Decide what to do
 	switch (activeTool) {
 	case Tool::Draw: {
+
+		redoVec.clear();
 		sf::Vector2i mousePixelPos = sf::Mouse::getPosition(window);
 		sf::Vector2f mouseWorldPos = window.mapPixelToCoords(mousePixelPos);
 
@@ -257,21 +271,19 @@ void Editor::update(float deltaTime) {
 
 		sf::Vector2i imagePos(localPos.x, localPos.y);
 
-		if (hasClicked) {
-			saveState(undoVec, canvasImage);
-			std::cout << "Draw save\n";
-			firstPos = imagePos;
-			hasClicked = false;
-		}
-		else {
-			if (canvasSprite.getGlobalBounds().contains(mouseWorldPos)) {
+		if (canvasSprite.getGlobalBounds().contains(mouseWorldPos)) {
+			if (hasClicked) {
+				saveState(undoVec, canvasImage);
+				firstPos = imagePos;
+				hasClicked = false;
+			}
+			else {
 				draw(firstPos, imagePos, canvasImage, color);
 				canvasTexture.update(canvasImage);
+
+				firstPos = imagePos;
 			}
-
-			firstPos = imagePos;
 		}
-
 		if (!sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) {
 			hasClicked = true;
 			activeTool = Tool::None;
@@ -279,18 +291,30 @@ void Editor::update(float deltaTime) {
 		break;
 	}
 	case Tool::Erase: {
-		isFillOn = false;
-		if (saveErase) {
-			saveState(undoVec, canvasImage);
-			saveErase = false;
-		}
-		isEraserOn = true;
-		erase(canvasImage, canvasTexture, canvasSprite, window, eraser);
+		sf::Vector2i mousePixelPos = sf::Mouse::getPosition(window);
+		sf::Vector2f mouseWorldPos = window.mapPixelToCoords(mousePixelPos);
 
-		if (!sf::Mouse::isButtonPressed(sf::Mouse::Button::Right)) {
-			isEraserOn = false;
-			saveErase = true;
-			activeTool = Tool::None;
+		eraser.setPosition(mouseWorldPos);
+
+		sf::Vector2f localPos = mouseWorldPos - canvasSprite.getPosition();
+		localPos += { canvasSprite.getLocalBounds().width / 2.f,
+			canvasSprite.getLocalBounds().height / 2.f };
+
+		sf::Vector2i imagePos(localPos.x, localPos.y);
+
+		if (canvasSprite.getGlobalBounds().contains(mouseWorldPos)) {
+			if (saveErase) {
+				saveState(undoVec, canvasImage);
+				saveErase = false;
+			}
+			isEraserOn = true;
+			erase(canvasImage, canvasTexture, canvasSprite, window, eraser, imagePos);
+
+			if (!sf::Mouse::isButtonPressed(sf::Mouse::Button::Right)) {
+				isEraserOn = false;
+				saveErase = true;
+				activeTool = Tool::None;
+			}
 		}
 		break;
 	}
@@ -304,18 +328,37 @@ void Editor::update(float deltaTime) {
 
 		sf::Vector2i imagePos(localPos.x, localPos.y);
 
-		fillBucket.setPosition(mouseWorldPos);
-		isFillOn = true;
 
-		if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) {
+		if (canvasSprite.getGlobalBounds().contains(mouseWorldPos)) {
 			saveState(undoVec, canvasImage);
 
 			floodFill(canvasImage, color, imagePos);
 			canvasTexture.update(canvasImage);
-
-			isFillOn = false;
-			activeTool = Tool::None;
 		}
+
+			activeTool = Tool::None;
+		break;
+	}
+	case Tool::Dropper: {
+		sf::Vector2i mousePixelPos = sf::Mouse::getPosition(window);
+		sf::Vector2f mouseWorldPos = window.mapPixelToCoords(mousePixelPos);
+
+		sf::Vector2f localPos = mouseWorldPos - canvasSprite.getPosition();
+		localPos += { canvasSprite.getLocalBounds().width / 2.f,
+			canvasSprite.getLocalBounds().height / 2.f };
+
+		sf::Vector2i imagePos(localPos.x, localPos.y);
+
+		if (canvasSprite.getGlobalBounds().contains(mouseWorldPos)) {
+				color = canvasImage.getPixel(imagePos.x, imagePos.y);
+
+				myColor[0] = color.r / 255.f;
+				myColor[1] = color.g / 255.f;
+				myColor[2] = color.b / 255.f;
+
+				activeTool = Tool::None;
+		}
+
 		break;
 	}
 	default:
@@ -417,9 +460,6 @@ void Editor::render() {
 	if (isEraserOn) {
 		window.draw(eraser);
 	}
-	if (isFillOn) {
-		window.draw(fillBucket);
-	}
 	ImGui::SFML::Render(window);
 	window.display();
 }
@@ -462,4 +502,17 @@ void Editor::clearScreen() {
 	saveState(undoVec, canvasImage);
 	canvasImage.create(projectSize[width], projectSize[height], sf::Color::White);
 	canvasTexture.update(canvasImage);
+}
+
+sf::Vector2i Editor::getImageMousePos() {
+	sf::Vector2i mousePixelPos = sf::Mouse::getPosition(window);
+	sf::Vector2f mouseWorldPos = window.mapPixelToCoords(mousePixelPos);
+
+	sf::Vector2f localPos = mouseWorldPos - canvasSprite.getPosition();
+	localPos += { canvasSprite.getLocalBounds().width / 2.f,
+		canvasSprite.getLocalBounds().height / 2.f };
+
+	sf::Vector2i imagePos(localPos.x, localPos.y);
+
+	return imagePos;
 }
